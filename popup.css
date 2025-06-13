@@ -1,0 +1,283 @@
+/* popup.css */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  width: 280px;
+  min-height: 150px;
+  padding: 0;
+  background: linear-gradient(135deg, #2c3e50 0%, #4b6cb7 100%);
+  color: #FFFFFF;
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#mainView {
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#settingsView {
+  position: relative; /* For absolute positioning of children */
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.08); /* Retain glassmorphism */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 8px; /* Match body if settings view is the only content */
+  /* border: 1px solid rgba(255, 255, 255, 0.15); */ /* Optional border */
+  /* box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12); */ /* Optional shadow */
+}
+
+
+.settings-button { /* Gear icon on mainView */
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 5px;
+  line-height: 1;
+  z-index: 100;
+  transition: color 0.2s ease;
+}
+
+.settings-button:hover {
+  color: #FFFFFF;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  margin-bottom: 5px;
+  margin-top: 45px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.tagline {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 25px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Toggle on main view (top-left) */
+.main-view-toggle {
+  position: absolute;
+  top: 18px;
+  left: 15px;
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+  border-radius: 0;
+  z-index: 99;
+}
+
+.main-view-toggle label:not(.toggle-switch-label) {
+  display: none;
+}
+
+/* New: Toggle on settings panel (top-left) */
+.settings-panel-main-toggle {
+  position: absolute;
+  top: 18px; /* Align with main view's toggle and settings close button */
+  left: 15px;
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+  z-index: 99; /* Below close button if they overlap */
+}
+.settings-panel-main-toggle label:not(.toggle-switch-label) {
+  display: none;
+}
+
+
+/* General Toggle Switch Styles - smaller */
+.toggle-switch-label {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: .3s;
+  border-radius: 28px;
+}
+
+.toggle-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Default ON state for toggles (e.g., sub-settings) */
+.toggle-switch-input:checked + .toggle-switch-slider {
+  background-color: #d32f2f;
+}
+
+/* Yellow ON state for main toggles (both on mainView and settingsView) */
+.main-view-toggle .toggle-switch-input:checked + .toggle-switch-slider,
+.settings-panel-main-toggle .toggle-switch-input:checked + .toggle-switch-slider {
+  background-color: #FFD700;
+}
+
+.toggle-switch-input:focus + .toggle-switch-slider {
+  box-shadow: 0 0 1px #FFD700;
+}
+
+.main-view-toggle .toggle-switch-input:focus + .toggle-switch-slider,
+.settings-panel-main-toggle .toggle-switch-input:focus + .toggle-switch-slider {
+  box-shadow: 0 0 2px #FFD700, 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+.toggle-switch-input:checked + .toggle-switch-slider:before {
+  transform: translateX(22px);
+}
+
+
+/* Stats Container */
+.stats-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.stat-item {
+  text-align: left;
+}
+
+.stat-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.malicious-count-label {
+    color: rgba(255, 215, 0, 0.9);
+}
+
+.progress-bar-container {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background-color: #FFD700;
+  border-radius: 5px;
+  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.15);
+}
+
+.percentage-label {
+  display: block;
+  text-align: right;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 3px;
+}
+
+
+/* Settings View Specifics */
+.settings-header { /* Now primarily for the close button */
+  display: flex;
+  justify-content: flex-end; /* Align close button to the right */
+  align-items: flex-start; /* Align to top */
+  /* margin-bottom: 20px; */ /* Removed, spacing handled by .settings-content */
+  /* border-bottom: 1px solid rgba(255, 255, 255, 0.18); */ /* Removed */
+  /* padding-bottom: 12px; */ /* Removed */
+  height: 40px; /* Give it some height to contain the absolutely positioned toggle and close button */
+}
+
+.settings-header h2 { /* Removed from HTML, so this rule is no longer needed */
+  /* margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF; */
+}
+
+.close-settings-button {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0; /* Adjusted padding */
+  line-height: 1;
+  transition: color 0.2s ease;
+  /* Position it relative to the settings-header or settingsView if header is minimal */
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 100;
+}
+.close-settings-button:hover {
+  color: #FFFFFF;
+}
+
+.settings-content { /* New wrapper for actual settings items */
+    margin-top: 15px; /* Space below the new top-left toggle and close button */
+}
+
+.setting-item { /* General styling for items in .settings-content */
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+/* This rule is for the text labels next to toggles in settings-content */
+.settings-content .setting-item label:not(.toggle-switch-label) {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-grow: 1;
+  margin-right: 10px;
+}

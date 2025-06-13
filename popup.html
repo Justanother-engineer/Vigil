@@ -1,27 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Clickfix Shield</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      width: 250px;
-      padding: 10px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 16px;
-      color: #333;
-    }
-    p {
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+  <title>Vigil</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>Clickfix Shield</h1>
-  <p>This extension helps protect you from accidentally copying and running malicious commands.</p>
-  <p>It monitors text you copy and alerts you if it detects a potentially harmful pattern.</p>
+  <div id="mainView">
+    <button class="settings-button" id="openSettingsButton" title="Settings">&#9881;</button>
+    <h1>Vigil</h1>
+    <p class="tagline">One step towards better security</p>
+
+    <div class="setting-item main-view-toggle">
+      <label class="toggle-switch-label">
+        <input type="checkbox" id="enableExtensionToggle" class="toggle-switch-input" checked>
+        <span class="toggle-switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-header-info">
+            <!-- Scanned/Malicious text counts removed for cleaner progress bar display -->
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="maliciousProgressBar"></div>
+        </div>
+        <span class="stat-label percentage-label" id="maliciousPercentageText">0% Malicious</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsView" style="display: none;">
+    <!-- New toggle for settings panel, top-left -->
+    <div class="setting-item settings-panel-main-toggle">
+      <label class="toggle-switch-label">
+        <input type="checkbox" id="enableExtensionToggleSettings" class="toggle-switch-input" checked>
+        <span class="toggle-switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-header">
+      <!-- <h2>Settings</h2> Removed -->
+      <button class="close-settings-button" id="closeSettingsButton" title="Close Settings">&times;</button>
+    </div>
+
+    <div class="settings-content"> <!-- Wrapper for other settings -->
+        <div class="setting-item">
+          <label for="enableClipboardMonToggle">Enable Clipboard Monitoring</label>
+          <label class="toggle-switch-label">
+            <input type="checkbox" id="enableClipboardMonToggle" class="toggle-switch-input" checked>
+            <span class="toggle-switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label for="enablePhishletMonToggle">Enable Phishlet Monitoring</label>
+          <label class="toggle-switch-label">
+            <input type="checkbox" id="enablePhishletMonToggle" class="toggle-switch-input">
+            <span class="toggle-switch-slider"></span>
+          </label>
+        </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>

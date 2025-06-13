@@ -23,14 +23,12 @@ if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') 
     const textString = text.toString(); // Ensure it's a string
     console.log("Programmatic Copy (writeText intercepted):", textString);
     lastClipboardText = textString; // Update on programmatic write
-    // Validate the text being written programmatically
     if (textString) {
       chrome.runtime.sendMessage({
         type: 'validateCopiedText',
         text: textString
       });
     }
-    // Call the original function to actually write to the clipboard
     return originalWriteText(text);
   };
   console.log("navigator.clipboard.writeText has been patched by extension.");
@@ -41,14 +39,11 @@ if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') 
 // --- Real-time Clipboard Monitoring (Basic) ---
 async function checkClipboard() {
   try {
-    // Check if the document has focus to avoid errors when the tab is not active
     if (document.hasFocus()) {
       const currentClipboardText = await navigator.clipboard.readText();
       if (currentClipboardText !== lastClipboardText) {
         console.log("Clipboard Changed (polled):", currentClipboardText);
         lastClipboardText = currentClipboardText;
-        // Optionally, you can also send this to background.js for validation
-        // if you want to catch changes made by other means (e.g., other extensions, OS-level copy)
         chrome.runtime.sendMessage({
           type: 'validateCopiedText',
           text: currentClipboardText
@@ -56,33 +51,40 @@ async function checkClipboard() {
       }
     }
   } catch (err) {
-    // Common errors: Document not focused, or clipboard permission denied by user for readText
     // console.warn("Could not read clipboard (possibly due to tab not focused or permissions):", err.message);
   }
 }
 
-// Poll the clipboard every 2 seconds (adjust as needed)
-// Be mindful of performance implications with very frequent polling.
 setInterval(checkClipboard, 500);
 
-// --- UI Handling (remains the same) ---
+// --- UI Handling ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'showSecurityAlertUI') {
     showAlertInPage(request.text);
     sendResponse({ status: "Alert UI initiated by content script" });
-    return true;
+    return true; // Keep channel open for async response if needed later
   }
 });
 
 function showAlertInPage(copiedText) {
   const alertId = 'custom-security-alert-extension-injected';
-  let existingAlert = document.getElementById(alertId);
-  if (existingAlert) {
-    existingAlert.remove();
-  }
+  const overlayId = 'custom-security-alert-overlay-extension-injected';
 
+  // Remove any existing alert and overlay to prevent duplicates
+  let existingAlert = document.getElementById(alertId);
+  if (existingAlert) existingAlert.remove();
+  let existingOverlay = document.getElementById(overlayId);
+  if (existingOverlay) existingOverlay.remove();
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = overlayId;
+  document.body.appendChild(overlay);
+
+  // Create alert container
   const alertContainer = document.createElement('div');
   alertContainer.id = alertId;
+
   alertContainer.innerHTML = `
       <h3>⚠️ Security Alert</h3>
       <p>The text you copied appears to be a potentially malicious command or suspicious text:</p>
@@ -96,32 +98,54 @@ function showAlertInPage(copiedText) {
   alertContainer.querySelector('.copied-text-preview').textContent = copiedText;
   document.body.appendChild(alertContainer);
 
-  function removeAlertUI(element) {
-    if (element) {
-      element.classList.remove('visible');
-      element.addEventListener('transitionend', () => {
-        if (element.parentElement) {
-          element.remove();
-        }
-      }, { once: true });
+  function removeDialog() {
+    if (alertContainer) {
+      alertContainer.classList.remove('visible');
     }
+    if (overlay) {
+      overlay.classList.remove('visible');
+    }
+    setTimeout(() => {
+      const currentAlert = document.getElementById(alertId);
+      if (currentAlert && currentAlert.parentElement) {
+        currentAlert.remove();
+      }
+      const currentOverlay = document.getElementById(overlayId);
+      if (currentOverlay && currentOverlay.parentElement) {
+        currentOverlay.remove();
+      }
+    }, 300);
   }
 
   alertContainer.querySelector('.cancel-button').addEventListener('click', () => {
     navigator.clipboard.writeText(' ').then(() => {
       console.log('Clipboard cleared due to security alert cancellation.');
-      lastClipboardText = ' '; // Update our tracker
+      lastClipboardText = ' ';
     }).catch(err => {
       console.error('Failed to clear clipboard:', err);
     });
-    removeAlertUI(alertContainer);
+    removeDialog();
   });
 
   alertContainer.querySelector('.ok-button').addEventListener('click', () => {
-    removeAlertUI(alertContainer);
+    // Inform background script that this was marked OK
+    chrome.runtime.sendMessage({
+      type: 'userMarkedAsOk',
+      text: copiedText // Sending the text can be useful for more complex logic later
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn("Error sending 'userMarkedAsOk' message:", chrome.runtime.lastError.message);
+      } else if (response && response.status) {
+        // console.log("Background response to 'userMarkedAsOk':", response.status);
+      }
+    });
+    removeDialog();
   });
 
   setTimeout(() => {
-      alertContainer.classList.add('visible');
+      const currentAlert = document.getElementById(alertId);
+      const currentOverlay = document.getElementById(overlayId);
+      if (currentAlert) currentAlert.classList.add('visible');
+      if (currentOverlay) currentOverlay.classList.add('visible');
   }, 10);
 }
