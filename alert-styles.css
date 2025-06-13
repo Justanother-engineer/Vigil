@@ -79,3 +79,21 @@
     background-color: #45a049;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+#custom-security-alert-overlay-extension-injected {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 2147483646; /* Just below the alert box */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none; /* Block interaction when invisible */
+}
+
+#custom-security-alert-overlay-extension-injected.visible {
+    opacity: 1;
+    pointer-events: auto; /* Allow interaction when visible */
+}

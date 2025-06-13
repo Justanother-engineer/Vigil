@@ -99,22 +99,26 @@ function showAlertInPage(copiedText) {
   document.body.appendChild(alertContainer);
 
   function removeDialog() {
-    if (alertContainer) {
-      alertContainer.classList.remove('visible');
+    const alertElement = document.getElementById(alertId);
+    const overlayElement = document.getElementById(overlayId);
+
+    if (alertElement) {
+      alertElement.classList.remove('visible');
     }
-    if (overlay) {
-      overlay.classList.remove('visible');
+    if (overlayElement) {
+      overlayElement.classList.remove('visible');
     }
+
+    // Wait for transitions to complete before removing elements
+    // Match the longest transition duration (0.4s for alert slide-out)
     setTimeout(() => {
-      const currentAlert = document.getElementById(alertId);
-      if (currentAlert && currentAlert.parentElement) {
-        currentAlert.remove();
+      if (alertElement && alertElement.parentElement) {
+        alertElement.remove();
       }
-      const currentOverlay = document.getElementById(overlayId);
-      if (currentOverlay && currentOverlay.parentElement) {
-        currentOverlay.remove();
+      if (overlayElement && overlayElement.parentElement) {
+        overlayElement.remove();
       }
-    }, 300);
+    }, 400); // Adjusted to match alert's transition duration (0.4s = 400ms)
   }
 
   alertContainer.querySelector('.cancel-button').addEventListener('click', () => {
@@ -145,7 +149,15 @@ function showAlertInPage(copiedText) {
   setTimeout(() => {
       const currentAlert = document.getElementById(alertId);
       const currentOverlay = document.getElementById(overlayId);
-      if (currentAlert) currentAlert.classList.add('visible');
-      if (currentOverlay) currentOverlay.classList.add('visible');
+      if (currentAlert) {
+          currentAlert.classList.add('visible');
+          const cancelButton = currentAlert.querySelector('.cancel-button');
+          if (cancelButton) {
+              cancelButton.focus(); // Set focus to the cancel button
+          }
+      }
+      if (currentOverlay) {
+          currentOverlay.classList.add('visible');
+      }
   }, 10);
 }
