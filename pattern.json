@@ -1,0 +1,70 @@
+{
+  "version": "1.3.0",
+  "description": "A collection of regex patterns to detect clipboard hijacking and malicious command execution associated with ClickFix attacks.",
+  "patterns": [
+    {
+      "id": "CF_001",
+      "name": "PowerShell Encoded Command",
+      "description": "Detects PowerShell using an encoded command, a common technique to hide malicious scripts in ClickFix attacks.",
+      "regex": "(?i)(powershell|pwsh)(\\.exe)?\\s+.*(-e|-en|-enc|-encodedc|-encodedcommand)",
+      "severity": "High",
+      "tags": ["powershell", "windows", "obfuscation", "execution", "clickfix"]
+    },
+    {
+      "id": "CF_002",
+      "name": "PowerShell Download & Execute",
+      "description": "Detects PowerShell's Invoke-Expression (IEX) or Invoke-WebRequest (IWR) used to download and run remote code, a core component of many ClickFix attacks.",
+      "regex": "(?i)(iex|invoke-expression|iwr|invoke-webrequest|invoke-restmethod).*\\(",
+      "severity": "High",
+      "tags": ["powershell", "windows", "downloader", "execution", "clickfix"]
+    },
+    {
+      "id": "CF_003",
+      "name": "Remote Script Execution via Pipe",
+      "description": "Detects downloading a remote script with cURL or Wget and piping it directly to a shell, a technique sometimes adapted for ClickFix.",
+      "regex": "(?i)(curl|wget)\\s+.*\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh)",
+      "severity": "High",
+      "tags": ["downloader", "linux", "macos", "windows", "execution", "curl", "wget", "bash", "clickfix"]
+    },
+    {
+      "id": "CF_004",
+      "name": "MSHTA Execution of Remote Payload",
+      "description": "Detects mshta.exe executing remote HTA files or javascript, a 'fileless' technique frequently observed in ClickFix campaigns.",
+      "regex": "(?i)mshta\\.exe\\s+(vbscript|javascript|http:|https:)",
+      "severity": "High",
+      "tags": ["windows", "execution", "fileless", "mshta", "clickfix"]
+    },
+    {
+      "id": "CF_005",
+      "name": "Bitsadmin or Certutil for Download",
+      "description": "Detects living-off-the-land binaries (LOLBins) like bitsadmin or certutil used to download malicious files as part of a ClickFix attack chain.",
+      "regex": "(?i)(bitsadmin|certutil).*(/transfer|/urlcache)",
+      "severity": "Medium",
+      "tags": ["windows", "downloader", "lolbin", "clickfix"]
+    },
+    {
+      "id": "CF_006",
+      "name": "Rundll32 Script Execution",
+      "description": "Detects rundll32 executing javascript, another method for malicious script execution seen in various attacks including those with similar user-interaction as ClickFix.",
+      "regex": "(?i)rundll32\\.exe\\s+javascript:",
+      "severity": "High",
+      "tags": ["windows", "execution", "fileless", "rundll32", "clickfix"]
+    },
+    {
+        "id": "CF_007",
+        "name": "Suspicious PowerShell Window Manipulation",
+        "description": "Detects PowerShell commands designed to run in a hidden window or without a user profile, common in ClickFix to evade user detection.",
+        "regex": "(?i)(powershell|pwsh)(\\.exe)?\\s+.*(-w|windowstyle)\\s+hidden|(-nop|-noprofile)",
+        "severity": "Medium",
+        "tags": ["powershell", "windows", "evasion", "clickfix"]
+    },
+    {
+        "id": "CF_008",
+        "name": "JavaScript Clipboard Manipulation",
+        "description": "Detects JavaScript code that programmatically copies text to the clipboard, a core component of the ClickFix social engineering trick.",
+        "regex": "(?i)clipboardData\\.setData|navigator\\.clipboard\\.writeText|document\\.execCommand\\(\\s*['\"]copy['\"]\\s*\\)",
+        "severity": "Medium",
+        "tags": ["javascript", "clipboard", "social-engineering", "clickfix"]
+    }
+  ]
+}

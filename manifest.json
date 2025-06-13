@@ -1,0 +1,30 @@
+{
+  "name": "Vigil",
+  "version": "1.0",
+  "manifest_version": 3,
+  "description": "Protects against clickfix attacks by monitoring copied text.",
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["clipboard.js"],
+      "css": ["alert-styles.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
