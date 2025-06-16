@@ -1,0 +1,338 @@
+:root {
+  --primary-color: #28A745;
+  --primary-color-darker: #1E7E34;
+  --danger-color: #DC3545;
+  --danger-color-darker: #C82333;
+  --text-color-primary: #212529;
+  --text-color-secondary: #495057;
+  --text-color-muted: #6C757D;
+  --background-color-light: #F8F9FA;
+  --background-color-white: #FFFFFF;
+  --border-color-light: #DEE2E6;
+  --border-color-medium: #CED4DA;
+  --border-color-extralight: #E9ECEF;
+  --focus-shadow-color: rgba(40, 167, 69, 0.25);
+  --disabled-opacity: 0.5;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  width: 280px;
+  min-height: 150px;
+  padding: 0;
+  background: var(--background-color-light);
+  color: var(--text-color-primary);
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color-light);
+}
+
+#mainView, #settingsView, #safeListView {
+  position: relative;
+  padding: 15px;
+}
+
+#settingsView {
+  background: var(--background-color-white);
+  border-top: 1px solid var(--border-color-light);
+}
+
+.settings-button, .close-settings-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  z-index: 100;
+  transition: color 0.2s ease;
+}
+
+.settings-button {
+  font-size: 22px;
+  color: var(--primary-color);
+}
+.settings-button:hover {
+  color: var(--primary-color-darker);
+}
+
+.close-settings-button {
+  font-size: 24px;
+  color: var(--text-color-muted);
+}
+.close-settings-button:hover {
+  color: var(--text-color-primary);
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 4px;
+  margin-top: 35px;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.tagline {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.main-view-toggle, .settings-panel-main-toggle {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+  z-index: 99;
+}
+
+.main-view-toggle label:not(.toggle-switch-label),
+.settings-panel-main-toggle label:not(.toggle-switch-label) {
+  display: none;
+}
+
+.toggle-switch-label {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-color-medium);
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.toggle-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--background-color-white);
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.toggle-switch-input:checked + .toggle-switch-slider {
+  background-color: var(--primary-color);
+  box-shadow: none;
+}
+
+.toggle-switch-input:focus + .toggle-switch-slider {
+  box-shadow: 0 0 0 2px var(--focus-shadow-color);
+}
+
+.toggle-switch-input:checked + .toggle-switch-slider:before {
+  transform: translateX(20px);
+}
+
+.stats-container {
+  background: var(--background-color-white);
+  border-radius: 6px;
+  border: 1px solid var(--border-color-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 12px;
+  color: var(--text-color-primary);
+  text-align: center;
+  margin-top: 15px;
+}
+
+.scan-activity-label {
+  font-size: 12px;
+  color: var(--primary-color);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.scan-progress-bar-container {
+  width: 100%;
+  background-color: var(--border-color-extralight);
+  border-radius: 4px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  border: 1px solid var(--border-color-medium);
+}
+
+.scan-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--danger-color);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.scan-stats-text {
+  font-size: 11px;
+  color: var(--text-color-secondary);
+}
+.scan-stats-text .malicious-highlight {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  height: 30px;
+  margin-bottom: 10px;
+}
+
+.settings-content {
+    margin-top: 10px;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.settings-content .setting-item label:not(.toggle-switch-label) {
+  font-size: 13px;
+  color: var(--text-color-primary);
+  flex-grow: 1;
+  margin-right: 8px;
+}
+
+.setting-item .toggle-switch-input:disabled + .toggle-switch-slider {
+    opacity: var(--disabled-opacity);
+    cursor: not-allowed;
+    background-color: var(--border-color-extralight);
+}
+.setting-item .toggle-switch-input:disabled + .toggle-switch-slider:before {
+    cursor: not-allowed;
+    background-color: var(--border-color-medium);
+}
+.setting-item .toggle-switch-input:disabled ~ label:not(.toggle-switch-label) {
+    opacity: 0.6; /* A bit more than general disabled for text */
+    cursor: not-allowed;
+    color: var(--text-color-muted);
+}
+
+.popup-button {
+  background-color: var(--primary-color);
+  color: var(--background-color-white);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.popup-button:hover {
+  background-color: var(--primary-color-darker);
+}
+
+#safeListView h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333; /* Keeping as is, or could be var(--text-color-primary) */
+  font-size: 18px;
+  font-weight: 500;
+}
+
+#safeListView .small-note {
+  font-size: 0.8em;
+  color: #666; /* Keeping as is, or could be var(--text-color-secondary) */
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.safe-list-ul {
+  list-style-type: none;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color-light);
+  border-radius: 4px;
+  background-color: var(--background-color-white);
+}
+
+.safe-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color-extralight);
+  font-size: 13px;
+}
+
+.safe-list-item:last-child {
+  border-bottom: none;
+}
+
+.safe-list-item-text {
+  flex-grow: 1;
+  margin-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-color-secondary);
+}
+
+.safe-list-item-delete {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 5px;
+  line-height: 1;
+  font-weight: bold;
+  transition: color 0.2s ease;
+}
+
+.safe-list-item-delete:hover {
+  color: var(--danger-color-darker);
+}
+
+.safe-list-item-error {
+    color: var(--danger-color);
+    padding: 8px 12px;
+    font-style: italic;
+}
+
+#noSafeListEntries {
+    color: var(--text-color-muted);
+    font-size: 13px;
+}

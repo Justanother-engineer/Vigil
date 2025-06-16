@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vigil</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="mainView">
+    <button class="settings-button" id="openSettingsButton" title="Settings">&#9881;</button>
+    <h1>Vigil</h1>
+    <p class="tagline">One step towards better security</p>
+
+    <div class="setting-item main-view-toggle">
+      <label class="toggle-switch-label">
+        <input type="checkbox" id="enableExtensionToggle" class="toggle-switch-input" checked>
+        <span class="toggle-switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="stats-container">
+      <div class="scan-activity-label">Scan Activity</div>
+      <div class="scan-progress-bar-container">
+        <div class="scan-progress-bar-fill" id="scanProgressBarFill"></div>
+      </div>
+      <div class="scan-stats-text" id="scanStatsText">
+        Malicious: 0 / Total: 0 (0%)
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 15px;">
+      <a href="https://coff.ee/justanother.engineer" target="_blank">
+        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important; width: auto !important;" >
+      </a>
+    </div>
+  </div>
+
+  <div id="settingsView" style="display: none;">
+    <div class="setting-item settings-panel-main-toggle">
+      <label class="toggle-switch-label">
+        <input type="checkbox" id="enableExtensionToggleSettings" class="toggle-switch-input" checked>
+        <span class="toggle-switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-header">
+      <button class="close-settings-button" id="closeSettingsButton" title="Close Settings">&times;</button>
+    </div>
+
+    <div class="settings-content">
+        <div class="setting-item">
+          <label for="enableClipboardMonToggle">Enable Clipboard Monitoring</label>
+          <label class="toggle-switch-label">
+            <input type="checkbox" id="enableClipboardMonToggle" class="toggle-switch-input" checked>
+            <span class="toggle-switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label for="enablePhishletMonToggle">Enable Phishlet Monitoring (Upcoming)</label>
+          <label class="toggle-switch-label">
+            <input type="checkbox" id="enablePhishletMonToggle" class="toggle-switch-input" disabled>
+            <span class="toggle-switch-slider"></span>
+          </label>
+        </div>
+        <hr>
+        <div class="setting-item">
+            <button id="viewSafeListButton" class="popup-button">View Safe List</button>
+        </div>
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="https://coff.ee/justanother.engineer" target="_blank">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 45px !important; width: auto !important;" >
+          </a>
+        </div>
+    </div>
+  </div>
+
+  <div id="safeListView" style="display: none;">
+    <div class="settings-header">
+        <button class="close-settings-button" id="closeSafeListViewButton" title="Back to Settings">&times;</button>
+    </div>
+    <h2>Safe List</h2>
+    <p class="small-note">Items on this list will not trigger alerts. You can remove them if needed.</p>
+    <ul id="safeListElement" class="safe-list-ul">
+    </ul>
+    <p id="noSafeListEntries" style="display: none; text-align: center; margin-top: 20px;">Your Safe List is empty.</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
