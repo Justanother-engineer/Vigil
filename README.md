@@ -2,6 +2,17 @@
 
 Vigil is a browser extension safeguarding you from social engineering attacks like "ClickFix" which trick users into executing malicious commands via the clipboard. It monitors your clipboard in real-time to prevent accidental execution of harmful scripts.
 
+## ⚠️ Detection in Action
+
+When Vigil detects malicious content:
+
+![Vigil in Action](images/readme_image1.png)
+
+*   **Alert Details**: Shows copied text and a warning.
+*   **User Choices**:
+    *   **Cancel & Clear Clipboard**: Clears clipboard.
+    *   **Add to Safe List & Copy**: Whitelists text and keeps it copied.
+
 ### Understanding "ClickFix"
 "ClickFix" attacks use deceptive prompts (fake errors, CAPTCHAs) to make users unknowingly copy malicious commands (e.g., PowerShell, `mshta`) and then paste and run them, often via `Win + R`, `Ctrl + V`, `Enter`. This bypasses typical browser security as the execution happens outside the browser, a technique used by APTs like APT28 and MuddyWater. Vigil bridges this gap by monitoring clipboard activity.
 
@@ -36,16 +47,6 @@ Vigil intelligently monitors your clipboard using the browser's Clipboard API. I
     *   Click the Vigil icon to open the popup.
     *   Toggle the extension or access settings (⚙️) for clipboard monitoring and Safe List management.
 
-## ⚠️ Detection in Action
-
-When Vigil detects malicious content:
-
-![Vigil in Action](images/readme_image1.png)
-
-*   **Alert Details**: Shows copied text and a warning.
-*   **User Choices**:
-    *   **Cancel & Clear Clipboard**: Clears clipboard.
-    *   **Add to Safe List & Copy**: Whitelists text and keeps it copied.
 
 ## 🛡️ Privacy & Data Security
 
