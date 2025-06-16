@@ -75,7 +75,7 @@ When Vigil detects potentially malicious content, it will display an alert simil
     *   **Cancel & Clear Clipboard**: Dismisses the alert and clears the clipboard content to prevent accidental pasting.
     *   **Add to Safe List & Copy**: Adds the detected text to your personal safe list (it won't be flagged again) and keeps the text in your clipboard.
 
-**(Optional: You can embed or link a short video demonstrating the detection and alert process here)**
+![Vigil in Action](images/readme_image1.png)
 
 
 ## 🛡️ Privacy & Data Security: Our Commitment
@@ -123,7 +123,7 @@ Contributions are welcome! If you have suggestions, bug reports, or want to cont
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details (if you have one).
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
 ---
 
