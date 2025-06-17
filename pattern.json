@@ -2,7 +2,7 @@
   { "source": "\\bpowershell\\s+-E\\s+[A-Za-z0-9+/=]{20,}", "flags": "i" },
   { "source": "\\bpowershell\\s+-E\\b", "flags": "i" },
   { "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(-e|-en|-enc|-encodedc|-encodedcommand)\\b", "flags": "i" },
-  { "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b(?=\\s*(?:$|[-/$'\\"`(\\[<.\\\\\\\]|(?:[A-Z][a-zA-Z0-9]*?-)|[a-zA-Z]:))", "flags": "i" },
+  { "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b(?=\\s+(?:[-/$'\\\\\\\"\\`(\\\\[<.\\\\\\\\\\\\\\]]|(?:[A-Z][a-zA-Z0-9]*?-)|[a-zA-Z]:))", "flags": "i" },
   { "source": "\\b(iex|invoke-expression|iwr|invoke-webrequest)\\b\\s*\\(", "flags": "i" },
   { "source": "(curl|wget)\\s+[^\\n\\r|]+\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh)", "flags": "i" },
   { "source": "\\bmshta\\.exe\\s+(vbscript|javascript|http:|https:)", "flags": "i" },
