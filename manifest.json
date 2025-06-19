@@ -6,8 +6,6 @@
   "permissions": [
     "clipboardRead",
     "clipboardWrite",
-    "activeTab",
-    "scripting",
     "storage",
     "alarms"
   ],
