@@ -1,6 +1,6 @@
 {
   "name": "Vigil",
-  "version": "1.0",
+  "version": "1.1",
   "manifest_version": 3,
   "description": "One step towards a more secure web. Vigil is a browser extension that helps you to protect one step at a time.",
   "permissions": [
