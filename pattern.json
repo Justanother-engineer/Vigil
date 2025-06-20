@@ -1,17 +1,54 @@
 [
-  { "source": "\\bpowershell\\s+-E\\s+[A-Za-z0-9+/=]{20,}", "flags": "i" },
-  { "source": "\\bpowershell\\s+-E\\b", "flags": "i" },
-  { "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(-e|-en|-enc|-encodedc|-encodedcommand)\\b", "flags": "i" },
-  { "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b(?=\\s+(?:[-/$'\\\\\\\"\\`(\\\\[<.\\\\\\\\\\\\\\]]|(?:[A-Z][a-zA-Z0-9]*?-)|[a-zA-Z]:))", "flags": "i" },
-  { "source": "\\b(iex|invoke-expression|iwr|invoke-webrequest)\\b\\s*\\(", "flags": "i" },
-  { "source": "(curl|wget)\\s+[^\\n\\r|]+\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh)", "flags": "i" },
-  { "source": "\\bmshta\\.exe\\s+(vbscript|javascript|http:|https:)", "flags": "i" },
-  { "source": "\\b(bitsadmin|certutil)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(\\/transfer|\\/urlcache|\\/decodehex|\\/encodehex|\\/decode|\\/encode|\\/addstore|\\/delstore|\\/verifyctl|\\/f|\\/split)\\b", "flags": "i" },
-  { "source": "\\brundll32\\.exe\\s+javascript:", "flags": "i" },
-  { "source": "\\bcmd\\s*\\/c\\s*start\\s*\\/min\\s*powershell\\b[^\\n\\r]*?\\b(invoke-webrequest|iwr)\\b[^\\n\\r]*?-outfile\\b[^\\n\\r]*?\\bstart-process\\b", "flags": "i" },
-  { "source": "\\bmshta(?:\\.exe)?\\s+(https?|hxxps?):\\/\\/[^\\s\"']+", "flags": "i" },
-  { "source": "\\bI\\s*am\\s*not\\s*a\\s*robot\\s*:\\s*CAPTCHA\\s*Verification\\b", "flags": "i" },
-  { "source": "\\bmshta(?:\\.exe)?\\s+\"“:\\/\\/[^\\s\"”]+[\"”]", "flags": "i" },
-  { "source": "\\bmshta(?:\\.exe)?\\s+[“\"']?(hxxps?|https?):\\/\\/[^\\s“\"”']+[“\"”']?", "flags": "i" },
-  { "source": "\\bmshta(?:\\.exe)?\\b.*?\\b(https?|hxxps?):\\/\\/", "flags": "i"}
+  {
+    "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(-e|-en|-enc|-encodedc|-encodedcommand)\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b(?=\\s+(?:[-/$'\\\\\\\"\\`(\\\\[<.\\\\\\\\\\\\\\]]|(?:[A-Z][a-zA-Z0-9]*?-)|[a-zA-Z]:))",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(iex|invoke-expression|iwr|invoke-webrequest)\\b\\s*\\(",
+    "flags": "i"
+  },
+  {
+    "source": "(curl|wget)\\s+[^\\n\\r|]+\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh)",
+    "flags": "i"
+  },
+  {
+    "source": "\\bmshta(?:\\.exe)?\\b[^\\n\\r]*?(vbscript:|javascript:|https?:|hxxps?:)",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(bitsadmin|certutil)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(\\/transfer|\\/urlcache|\\/decodehex|\\/encodehex|\\/decode|\\/encode|\\/addstore|\\/delstore|\\/verifyctl|\\/f|\\/split)\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\brundll32\\.exe\\s+javascript:",
+    "flags": "i"
+  },
+  {
+    "source": "\\bcmd\\s*\\/c\\s*start\\s*\\/min\\s*powershell\\b[^\\n\\r]*?\\b(invoke-webrequest|iwr)\\b[^\\n\\r]*?-outfile\\b[^\\n\\r]*?\\bstart-process\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\bI\\s*am\\s*not\\s*a\\s*robot\\s*:\\s*CAPTCHA\\s*Verification\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(iex|invoke-expression)\\s*\\(.*(New-Object\\s+System\\.Net\\.WebClient|Net\\.WebClient).*\\.(DownloadString|DownloadFile)\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(Invoke-Expression|iex)\\b[^\\n\\r]*?\\bFromBase64String\\b",
+    "flags": "i"
+  },
+  {
+    "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\bNet\\.WebClient\\b[^\\n\\r]*?\\.(DownloadFile|DownloadString|Invoke)\\b",
+    "flags": "i"
+  },
+  {
+    "source": "&\\s*\\(.*-f.*\\)",
+    "flags": "i"
+  }
 ]

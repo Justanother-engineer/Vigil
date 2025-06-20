@@ -19,7 +19,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["clipboard.js"],
+      "js": ["clipboard.js", "page_monitor.js"],
       "css": ["alert-styles.css"],
       "run_at": "document_start"
     }
