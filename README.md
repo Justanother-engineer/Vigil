@@ -1,6 +1,6 @@
 # Vigil 🛡️
 
-Vigil is a browser extension safeguarding you from social engineering attacks like "ClickFix" which trick users into executing malicious commands via the clipboard. It monitors your clipboard in real-time to prevent accidental execution of harmful scripts.
+Vigil is a browser extension safeguarding you from social engineering attacks like "ClickFix","filefix" which trick users into executing malicious commands via the clipboard. It monitors your clipboard in real-time to prevent accidental execution of harmful scripts.
 
 ## ⚠️ Detection in Action
 
