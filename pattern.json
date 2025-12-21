@@ -1,54 +1,97 @@
 [
   {
     "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(-e|-en|-enc|-encodedc|-encodedcommand)\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects PowerShell execution using the EncodedCommand parameter (Base64), frequently used to hide malicious scripts."
   },
   {
     "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b(?=\\s+(?:[-/$'\\\\\\\"\\`(\\\\[<.\\\\\\\\\\\\\\]]|(?:[A-Z][a-zA-Z0-9]*?-)|[a-zA-Z]:))",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects PowerShell commands followed immediately by suspicious characters, paths, or flags, indicating non-interactive execution."
   },
   {
     "source": "\\b(iex|invoke-expression|iwr|invoke-webrequest)\\b\\s*\\(",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects PowerShell `Invoke-Expression` (IEX) or `Invoke-WebRequest` calls, common methods for executing memory-resident code or downloading payloads."
   },
   {
-    "source": "(curl|wget)\\s+[^\\n\\r|]+\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh)",
-    "flags": "i"
+    "source": "(curl|wget)\\s+[^\\n\\r|]+\\s+\\|\\s+(bash|sh|zsh|powershell|pwsh|perl|python|python3|ruby|php)",
+    "flags": "i",
+    "description": "Detects the 'Download and Execute' pattern where content from `curl` or `wget` is piped directly into a shell or script interpreter."
   },
   {
     "source": "\\bmshta(?:\\.exe)?\\b[^\\n\\r]*?(vbscript:|javascript:|https?:|hxxps?:)",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects `mshta.exe` (a Living-off-the-Land binary) executing remote HTA files or inline scripts (VBScript/JScript)."
   },
   {
     "source": "\\b(bitsadmin|certutil)(?:\\.exe)?\\b[^\\n\\r]*?\\s+(\\/transfer|\\/urlcache|\\/decodehex|\\/encodehex|\\/decode|\\/encode|\\/addstore|\\/delstore|\\/verifyctl|\\/f|\\/split)\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects misuse of Windows utility binaries (`certutil`, `bitsadmin`) to download files, decode payloads, or modify certificate stores."
   },
   {
     "source": "\\brundll32\\.exe\\s+javascript:",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects `rundll32.exe` executing JavaScript code directly via the command line."
   },
   {
     "source": "\\bcmd\\s*\\/c\\s*start\\s*\\/min\\s*powershell\\b[^\\n\\r]*?\\b(invoke-webrequest|iwr)\\b[^\\n\\r]*?-outfile\\b[^\\n\\r]*?\\bstart-process\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects a specific chain of commands: CMD starting a hidden PowerShell process to download a file and immediately execute it."
   },
   {
     "source": "\\bI\\s*am\\s*not\\s*a\\s*robot\\s*:\\s*CAPTCHA\\s*Verification\\b",
-    "flags": "i"
-  },
-  {
-    "source": "\\b(iex|invoke-expression)\\s*\\(.*(New-Object\\s+System\\.Net\\.WebClient|Net\\.WebClient).*\\.(DownloadString|DownloadFile)\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects social engineering bait text often associated with 'Fake CAPTCHA' clipboard injection attacks."
   },
   {
     "source": "\\b(Invoke-Expression|iex)\\b[^\\n\\r]*?\\bFromBase64String\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects `Invoke-Expression` attempting to execute a string derived specifically from `FromBase64String`."
   },
   {
     "source": "\\b(powershell|pwsh)(?:\\.exe)?\\b[^\\n\\r]*?\\bNet\\.WebClient\\b[^\\n\\r]*?\\.(DownloadFile|DownloadString|Invoke)\\b",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects PowerShell using the .NET `WebClient` class to download files or strings, bypassing standard cmdlets like `Invoke-WebRequest`."
   },
   {
     "source": "&\\s*\\(.*-f.*\\)",
-    "flags": "i"
+    "flags": "i",
+    "description": "Detects PowerShell format operator obfuscation (e.g., `& ('{0}{1}' -f 'I','EX')`), used to hide command signatures."
+  },
+  {
+    "source": "\\|\\s*base64\\s+(?:-d|--decode)\\s*\\|\\s*(bash|sh|zsh|python|python3|perl|ruby)\\b",
+    "flags": "i",
+    "description": "Detects Base64 decoded content being piped directly into a shell or interpreter, widely used to obfuscate payload content."
+  },
+  {
+    "source": "\\bosascript\\b[^\\n\\r]*?-e\\s+['\"]do\\s+shell\\s+script\\b",
+    "flags": "i",
+    "description": "Detects macOS AppleScript (`osascript`) executing shell commands, a bridge often used by malware to access system functions."
+  },
+  {
+    "source": "\\|\\s*(?:sudo\\s+)?nohup\\s+(bash|sh|zsh|python|perl)\\b",
+    "flags": "i",
+    "description": "Detects malicious processes detached from the terminal using `nohup`, intended to persist after the user closes the window."
+  },
+  {
+    "source": "\\b(?:sudo\\s+)?xattr\\s+(?:-r\\s+)?(?:-c|-d\\s+com\\.apple\\.quarantine)\\b",
+    "flags": "i",
+    "description": "Detects attempts to remove the 'com.apple.quarantine' attribute (Gatekeeper) on macOS to bypass security warnings."
+  },
+  {
+    "source": "\\bdscl\\s+\\.\\s+-authonly\\b",
+    "flags": "i",
+    "description": "Detects `dscl` commands checking for valid credentials locally, often used by credential stealers to validate captured passwords."
+  },
+  {
+    "source": "\\(crontab\\s+-l\\s*;\\s*echo\\b[^|]+\\|\\s*crontab\\s+-",
+    "flags": "i",
+    "description": "Detects the specific 'one-liner' pattern used to inject a new job into the user's crontab for persistence without opening an editor."
+  },
+  {
+    "source": "\\bschtasks(?:\\.exe)?\\s+\\/(?:create|change)\\b[^\\n\\r]*?\\/t(n|r)\\b",
+    "flags": "i",
+    "description": "Detects the creation or modification of Windows Scheduled Tasks, a common technique for establishing persistence."
   }
 ]
