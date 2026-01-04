@@ -93,5 +93,10 @@
     "source": "\\bschtasks(?:\\.exe)?\\s+\\/(?:create|change)\\b[^\\n\\r]*?\\/t(n|r)\\b",
     "flags": "i",
     "description": "Detects the creation or modification of Windows Scheduled Tasks, a common technique for establishing persistence."
-  }
+  },
+  {
+    "source": "Invoke-WebRequest\\s+.*?-Uri\\s+[\\s\\S]*?Start-Process",
+    "flags": "i",
+    "description": "Detects the 'Download and Execute' pattern where Invoke-WebRequest retrieves a payload via the -Uri parameter and Start-Process immediately executes it."
+}
 ]
