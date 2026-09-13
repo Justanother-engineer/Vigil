@@ -47,7 +47,7 @@ function loadClipboard(opts = {}) {
     },
     setInterval: () => 0,
     setTimeout: () => 0,
-    console,
+    console: opts.console ?? console,
   };
   const context = vm.createContext(sandbox);
   vm.runInContext(readSource('clipboard.js'), context, { filename: 'clipboard.js' });

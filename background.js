@@ -24,14 +24,16 @@ async function fetchPatternsFromSource(sourcePath, isLocal = false) {
 }
 
 async function fetchAndStoreRemotePatterns() {
-  const serializablePatterns = await fetchPatternsFromSource(PATTERNS_URL);
+  // ponytail: query param defeats CDN edge caching so a fresh push applies on next reload.
+  const serializablePatterns = await fetchPatternsFromSource(`${PATTERNS_URL}?t=${Date.now()}`);
   if (serializablePatterns && serializablePatterns.length > 0) {
+    const updatedAt = Date.now();
     try {
       await chrome.storage.local.set({
         [PATTERNS_STORAGE_KEY]: serializablePatterns,
-        [LAST_UPDATED_STORAGE_KEY]: Date.now()
+        [LAST_UPDATED_STORAGE_KEY]: updatedAt
       });
-      console.log('[Vigil] Remote patterns stored.');
+      console.log(`[Vigil] Remote patterns stored: ${serializablePatterns.length}, updated ${new Date(updatedAt).toISOString()}.`);
     } catch (error) {
       console.error('[Vigil] Failed to store remote patterns:', error);
     }
@@ -42,13 +44,21 @@ async function fetchAndStoreRemotePatterns() {
 }
 
 async function getEffectivePatterns() {
-  let serializablePatterns = (await chrome.storage.local.get([PATTERNS_STORAGE_KEY]))[PATTERNS_STORAGE_KEY];
+  const stored = await chrome.storage.local.get([PATTERNS_STORAGE_KEY, LAST_UPDATED_STORAGE_KEY]);
+  let serializablePatterns = stored[PATTERNS_STORAGE_KEY];
 
   // Keep good stored entries even if some are malformed; miss only when none usable.
   serializablePatterns = Array.isArray(serializablePatterns)
     ? serializablePatterns.filter(p => p && typeof p.source === 'string')
     : [];
   if (serializablePatterns.length === 0) serializablePatterns = null;
+
+  if (serializablePatterns) {
+    const when = stored[LAST_UPDATED_STORAGE_KEY]
+      ? new Date(stored[LAST_UPDATED_STORAGE_KEY]).toISOString()
+      : 'unknown time';
+    console.log(`[Vigil] Using stored patterns: ${serializablePatterns.length}, updated ${when}.`);
+  }
 
   if (!serializablePatterns) {
     serializablePatterns = await fetchAndStoreRemotePatterns();

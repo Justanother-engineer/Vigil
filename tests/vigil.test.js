@@ -3,6 +3,7 @@
 // Each test drives the real extension sources through the vm harness.
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 const { loadClipboard, loadBackground, sendBackgroundMessage, loadShippedPatterns } = require('./helpers');
 
 test('copy event triggers an immediate clipboard check', async () => {
@@ -243,4 +244,57 @@ test('shipped patterns compile cleanly and spare benign text', () => {
       `expected benign text to stay clean: ${benign}`,
     );
   }
+});
+
+test('remote pattern fetch is cache-busted', async () => {
+  const urls = [];
+  const { state } = loadBackground({
+    store: {},
+    fetchImpl: async (url) => {
+      urls.push(String(url));
+      return { ok: true, json: async () => [{ source: 'x', flags: 'i' }] };
+    },
+  });
+  await state.handlers.onInstalled();
+  assert.ok(
+    urls.some((u) => u.includes('pattern.json?t=')),
+    `expected cache-busted pattern URL, got ${JSON.stringify(urls)}`,
+  );
+});
+
+test('pattern state is observable in logs', async () => {
+  const logs = [];
+  const stubConsole = { log: (...a) => logs.push(a.join(' ')), warn: (...a) => logs.push(a.join(' ')), error: () => {} };
+  const { state } = loadBackground({
+    store: {},
+    console: stubConsole,
+    fetchImpl: async () => ({ ok: true, json: async () => [{ source: 'x', flags: 'i' }, { source: 'y', flags: '' }] }),
+  });
+  await state.handlers.onInstalled();
+  assert.ok(
+    logs.some((l) => l.includes('stored') && l.includes('2')),
+    `expected stored-pattern count in logs, got ${JSON.stringify(logs)}`,
+  );
+
+  const logs2 = [];
+  const stubConsole2 = { log: (...a) => logs2.push(a.join(' ')), warn: (...a) => logs2.push(a.join(' ')), error: () => {} };
+  const state2 = loadBackground({
+    store: { vigilDynamicPatterns: [{ source: 'x', flags: 'i' }], vigilPatternsLastUpdated: 1726000000000 },
+    console: stubConsole2,
+  }).state;
+  await sendBackgroundMessage(state2, { type: 'validateCopiedText', text: 'hello' });
+  assert.ok(
+    logs2.some((l) => l.includes('stored patterns') && l.includes('1')),
+    `expected stored-pattern reuse in logs, got ${JSON.stringify(logs2)}`,
+  );
+});
+
+test('clipboard read failure warns once, not silently or spammy', async () => {
+  const warns = [];
+  const stubConsole = { log: () => {}, warn: (...a) => warns.push(a.join(' ')), error: () => {} };
+  const { context } = loadClipboard({ console: stubConsole });
+  vm.runInContext('navigator.clipboard.readText = async () => { throw new Error("denied"); };', context);
+  await vm.runInContext('checkClipboard()', context);
+  await vm.runInContext('checkClipboard()', context);
+  assert.equal(warns.length, 1, `expected exactly one read-failure warn, got ${JSON.stringify(warns)}`);
 });

@@ -7,6 +7,7 @@ let clipboardMonitoringIsEnabled = true; // Tracks if clipboard monitoring speci
 const VIGIL_SAFE_LIST_KEY = 'vigilSafeList'; // Key for storing the safe list in chrome.storage.local.
 let validationInProgressForText = null; // Stores text currently being validated to prevent redundant parallel validations.
 let quarantinedText = null; // ponytail: per-tab stash of cleared malware text; restore on safelist, drop on new copy/tab close.
+let lastReadErrorMessage = null; // ponytail: warn once per distinct read failure; 500ms spam helps nobody.
 const MAX_VALIDATE_LEN = 16000; // ponytail: head-only validation; tail evasion is the documented ceiling.
 
 // Helper function to identify common Chrome extension communication errors.
@@ -174,8 +175,12 @@ async function checkClipboard() {
     if (currentClipboardText.trim() === '' && (quarantinedText !== null || lastClipboardText.trim() === '')) return;
     await processAndRelayClipboardText(currentClipboardText, "polled");
   } catch (err) {
-    // Silently ignore errors from readText (e.g., page not focused, permission denied by user).
-    // These are common and usually not indicative of an extension problem.
+    // Fail loud once per distinct error so dead polls are diagnosable; dedup avoids 500ms log spam.
+    const readErrorMessage = (err && err.message) || String(err);
+    if (readErrorMessage !== lastReadErrorMessage) {
+      lastReadErrorMessage = readErrorMessage;
+      console.warn('[Vigil Clipboard] Clipboard read failed (page unfocused or permission denied):', readErrorMessage);
+    }
   }
 }
 
