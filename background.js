@@ -25,7 +25,7 @@ async function fetchPatternsFromSource(sourcePath, isLocal = false) {
 
 async function fetchAndStoreRemotePatterns() {
   const serializablePatterns = await fetchPatternsFromSource(PATTERNS_URL);
-  if (serializablePatterns) {
+  if (serializablePatterns && serializablePatterns.length > 0) {
     try {
       await chrome.storage.local.set({
         [PATTERNS_STORAGE_KEY]: serializablePatterns,
@@ -35,16 +35,20 @@ async function fetchAndStoreRemotePatterns() {
     } catch (error) {
       console.error('[Vigil] Failed to store remote patterns:', error);
     }
+    return serializablePatterns;
   }
-  return serializablePatterns;
+  console.warn('[Vigil] Empty remote patterns; keeping existing.');
+  return null;
 }
 
 async function getEffectivePatterns() {
   let serializablePatterns = (await chrome.storage.local.get([PATTERNS_STORAGE_KEY]))[PATTERNS_STORAGE_KEY];
 
-  if (!(Array.isArray(serializablePatterns) && serializablePatterns.every(p => p && typeof p.source === 'string'))) {
-    serializablePatterns = null;
-  }
+  // Keep good stored entries even if some are malformed; miss only when none usable.
+  serializablePatterns = Array.isArray(serializablePatterns)
+    ? serializablePatterns.filter(p => p && typeof p.source === 'string')
+    : [];
+  if (serializablePatterns.length === 0) serializablePatterns = null;
 
   if (!serializablePatterns) {
     serializablePatterns = await fetchAndStoreRemotePatterns();
@@ -55,7 +59,23 @@ async function getEffectivePatterns() {
     serializablePatterns = await fetchPatternsFromSource(LOCAL_PATTERNS_PATH, true);
   }
 
-  return serializablePatterns ? serializablePatterns.map(p => new RegExp(p.source, p.flags || '')) : [];
+  return (serializablePatterns ?? []).flatMap(p => {
+    try {
+      // ponytail: skip one bad remote pattern instead of failing all detection.
+      if (!p || typeof p.source !== 'string' || p.source.length > 1000) {
+        console.warn('[Vigil] Skipping invalid pattern:', p && p.source);
+        return [];
+      }
+      if (p.flags !== undefined && (typeof p.flags !== 'string' || !/^[gimsuy]*$/.test(p.flags))) {
+        console.warn('[Vigil] Skipping pattern with invalid flags:', p.source, p.flags);
+        return [];
+      }
+      return [new RegExp(p.source, p.flags || '')];
+    } catch (error) {
+      console.warn('[Vigil] Skipping invalid pattern:', p && p.source, error.message);
+      return [];
+    }
+  });
 }
 
 async function initializeStorage() {
@@ -90,7 +110,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     try {
       switch (request.type) {
         case 'validateCopiedText': {
-          const textToValidate = request.text;
+          const rawText = String(request.text ?? '');
+          const textToValidate = rawText.slice(0, 16000); // ponytail: head-only; mirrors clipboard.js cap.
           const currentPatterns = await getEffectivePatterns();
           let { scannedEntries = 0, maliciousFound = 0 } = await chrome.storage.local.get(['scannedEntries', 'maliciousFound']);
           scannedEntries++;
@@ -100,8 +121,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           if (isMalicious) {
             maliciousFound++;
             updatesToStore.maliciousFound = maliciousFound;
-            chrome.tabs.sendMessage(sender.tab.id, { type: "showSecurityAlertUI", text: textToValidate })
-              .catch(err => console.warn("[Vigil] Could not send UI alert to tab:", err.message));
+            // UI/quarantine path carries full bytes; only the regex test used the head.
+            const tabId = sender?.tab?.id;
+            if (tabId != null) {
+              chrome.tabs.sendMessage(tabId, { type: "showSecurityAlertUI", text: rawText })
+                .catch(err => console.warn("[Vigil] Could not send UI alert to tab:", err.message));
+            }
           }
           await chrome.storage.local.set(updatesToStore);
           sendResponse({ isMalicious });

@@ -6,6 +6,8 @@ let extensionIsEnabled = true; // Tracks if the overall extension functionality 
 let clipboardMonitoringIsEnabled = true; // Tracks if clipboard monitoring specifically is enabled.
 const VIGIL_SAFE_LIST_KEY = 'vigilSafeList'; // Key for storing the safe list in chrome.storage.local.
 let validationInProgressForText = null; // Stores text currently being validated to prevent redundant parallel validations.
+let quarantinedText = null; // ponytail: per-tab stash of cleared malware text; restore on safelist, drop on new copy/tab close.
+const MAX_VALIDATE_LEN = 16000; // ponytail: head-only validation; tail evasion is the documented ceiling.
 
 // Helper function to identify common Chrome extension communication errors.
 function isCommunicationError(error) {
@@ -63,12 +65,15 @@ async function processAndRelayClipboardText(newText, source) {
   if (!extensionIsEnabled || !clipboardMonitoringIsEnabled) return;
 
   const textString = String(newText); // Ensure text is a string.
-  // Avoid re-processing if this exact text is already undergoing validation.
+  // Claim synchronously (before any await) so concurrent duplicates dedup.
+  // Released on every exit: early returns below, the validation finally, and the backstop at function end.
   if (validationInProgressForText === textString) return;
+  validationInProgressForText = textString;
 
   // Abort if extension context is invalid (e.g., background service worker terminated).
   if (!chrome.runtime || !chrome.runtime.id) {
     console.warn('[Vigil Clipboard] Extension context invalidated. Aborting clipboard processing for this event.');
+    validationInProgressForText = null;
     return;
   }
 
@@ -78,11 +83,14 @@ async function processAndRelayClipboardText(newText, source) {
     if (isInSafeList) {
       lastClipboardText = textString;
       lastAlertedText = null; // Clear last alerted text if current text is safelisted.
+      if (quarantinedText === textString) quarantinedText = null;
+      validationInProgressForText = null;
       return;
     }
   } catch (error) {
     if (isCommunicationError(error)) {
       console.warn('[Vigil Clipboard] Background service unavailable for Safe List check. Aborting current clipboard processing.');
+      validationInProgressForText = null;
       return; // Exit to prevent further errors for this event.
     }
     console.error('[Vigil Clipboard] Error checking Safe List:', error.message, error.stack || '');
@@ -90,22 +98,40 @@ async function processAndRelayClipboardText(newText, source) {
   }
 
   // Avoid re-alerting if text is polled, was the last alerted, and hasn't changed from last processed.
-  if (source === "polled" && textString === lastAlertedText && textString === lastClipboardText) return;
+  if (source === "polled" && textString === lastAlertedText && textString === lastClipboardText) {
+    validationInProgressForText = null;
+    return;
+  }
+
+  // New non-empty copy while a quarantine is pending wins; discard old stash (fail-closed: it stays cleared).
+  if (quarantinedText !== null && textString.trim() !== '' && textString !== quarantinedText && textString !== lastAlertedText) {
+    quarantinedText = null;
+  }
 
   lastClipboardText = textString;
 
   if (textString.trim() !== '') {
+    // Send only the head for validation; quarantine/restore/safelist keep full bytes.
+    // In-flight flag already holds the full text (claimed above); do not overwrite with the head.
+    const validationText = textString.slice(0, MAX_VALIDATE_LEN);
     try {
-      validationInProgressForText = textString;
       // Re-check runtime context before sending validation message.
       if (!chrome.runtime || !chrome.runtime.id) {
           console.warn('[Vigil Clipboard] Extension context invalidated before validation. Aborting this attempt.');
           // Throwing an error here ensures the 'finally' block runs to clear validationInProgressForText.
           throw new Error("Extension context invalidated prior to validation send.");
       }
-      const response = await chrome.runtime.sendMessage({ type: 'validateCopiedText', text: textString });
+      const response = await chrome.runtime.sendMessage({ type: 'validateCopiedText', text: validationText });
       if (response?.isMalicious) {
         lastAlertedText = textString; // Mark text as alerted.
+        // Quarantine: stash malware text and clear clipboard immediately so paste is safe pending user choice.
+        quarantinedText = textString;
+        try {
+          await navigator.clipboard.writeText('');
+          lastClipboardText = '';
+        } catch (clearErr) {
+          console.warn('[Vigil Clipboard] Failed to clear malicious clipboard text:', clearErr.message);
+        }
       } else if (lastAlertedText === textString) {
         // If not malicious (or validation succeeded and it's not), clear alert status for this text.
         lastAlertedText = null;
@@ -129,6 +155,8 @@ async function processAndRelayClipboardText(newText, source) {
     // If clipboard is now empty and it was the last alerted text, clear alert status.
     lastAlertedText = null;
   }
+  // Backstop release for paths that never entered validation (e.g. empty text).
+  if (validationInProgressForText === textString) validationInProgressForText = null;
 }
 
 // Periodically checks the clipboard content if the document has focus.
@@ -142,6 +170,8 @@ async function checkClipboard() {
   }
   try {
     const currentClipboardText = await navigator.clipboard.readText();
+    // Skip our own quarantine clear to avoid validate-write loops.
+    if (currentClipboardText.trim() === '' && (quarantinedText !== null || lastClipboardText.trim() === '')) return;
     await processAndRelayClipboardText(currentClipboardText, "polled");
   } catch (err) {
     // Silently ignore errors from readText (e.g., page not focused, permission denied by user).
@@ -150,6 +180,7 @@ async function checkClipboard() {
 }
 
 setInterval(checkClipboard, POLLING_INTERVAL); // Start clipboard polling.
+document.addEventListener('copy', () => checkClipboard()); // Immediate check on copy; poll remains the fallback.
 
 // Handles messages from other parts of the extension (e.g., background script).
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -168,6 +199,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Displays an in-page security alert UI.
 function showAlertInPage(copiedText) {
+  // Fail-closed: ensure malware is out of clipboard while alert is up.
+  // Stash in per-tab temp variable; restore only on explicit safelist choice.
+  if (quarantinedText === null) quarantinedText = copiedText;
+  navigator.clipboard.writeText('').catch(() => {});
+  lastClipboardText = '';
   const alertId = 'custom-security-alert-extension-injected';
   const overlayId = 'custom-security-alert-overlay-extension-injected';
 
@@ -222,9 +258,10 @@ function showAlertInPage(copiedText) {
   }
 
   alertContainer.querySelector('.cancel-button').addEventListener('click', () => {
-    navigator.clipboard.writeText(' ') // Attempt to clear clipboard content.
+    navigator.clipboard.writeText('') // Attempt to clear clipboard content.
       .catch(err => console.error('[Vigil Clipboard] Failed to clear clipboard:', err.message));
-    lastClipboardText = ' ';
+    lastClipboardText = '';
+    quarantinedText = null;
     removeDialog();
   });
 
@@ -234,7 +271,9 @@ function showAlertInPage(copiedText) {
       removeDialog(); // Still remove dialog.
       return;
     }
-    chrome.runtime.sendMessage({ type: 'addToSafeList', text: copiedText })
+    const textToRestore = quarantinedText ?? copiedText;
+    // Safelist the exact bytes being restored so the restored text does not re-alert.
+    chrome.runtime.sendMessage({ type: 'addToSafeList', text: textToRestore })
       .catch(err => {
         if (isCommunicationError(err)) {
           console.warn('[Vigil Clipboard] Background service unavailable for addToSafeList. Action aborted.');
@@ -242,7 +281,15 @@ function showAlertInPage(copiedText) {
           console.error('[Vigil Clipboard] Error sending addToSafeList:', err.message, err.stack || '');
         }
       })
-      .finally(() => {
+      .finally(async () => {
+        try {
+          await navigator.clipboard.writeText(textToRestore);
+          lastClipboardText = textToRestore;
+        } catch (err) {
+          console.error('[Vigil Clipboard] Failed to restore clipboard:', err.message);
+        }
+        lastAlertedText = null;
+        quarantinedText = null;
         removeDialog(); // Ensure dialog is always removed.
       });
   });

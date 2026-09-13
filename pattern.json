@@ -98,5 +98,15 @@
     "source": "Invoke-WebRequest\\s+.*?-Uri\\s+[\\s\\S]*?Start-Process",
     "flags": "i",
     "description": "Detects the 'Download and Execute' pattern where Invoke-WebRequest retrieves a payload via the -Uri parameter and Start-Process immediately executes it."
-}
+  },
+  {
+    "source": "\\b(irm|iwr|invoke-restmethod|invoke-webrequest)\\b[^|\\n\\r]*\\|\\s*(iex|invoke-expression)\\b",
+    "flags": "i",
+    "description": "Detects the PowerShell download cradle where irm/iwr output is piped into iex, the classic ClickFix clipboard payload shape."
+  },
+  {
+    "source": "\\biex\\s*\\(\\s*(?:new-object\\s+)?net\\.webclient\\b",
+    "flags": "i",
+    "description": "Detects iex executing a Net.WebClient download directly, without a preceding powershell keyword."
+  }
 ]

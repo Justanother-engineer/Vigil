@@ -58,6 +58,8 @@ Your privacy is paramount.
 
 Vigil uses `pattern.json` for detection rules.
 *   **Remote & Local Patterns**: Fetches updates from GitHub, with a local fallback.
+*   **Where to watch fetches**: pattern pulls run in the extension service worker, so they never appear in a web page's DevTools Network tab — use `chrome://extensions` → Vigil → "Inspect views: service worker". Nothing fetches on page reload by design (install, browser startup, 24h alarm, or lazily on first validation with empty storage).
+*   **Blind spot**: copies made on `chrome://` pages (e.g. New Tab) can't be observed — content scripts are excluded there by the platform. Monitoring resumes once any regular page has focus.
 *   **Format**: Each pattern has a `source` (regex string) and optional `flags` (e.g., `i` for ignore case, `g` for global, `m` for multiline).
     ```json
     [
