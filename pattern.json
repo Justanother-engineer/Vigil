@@ -108,5 +108,10 @@
     "source": "\\biex\\s*\\(\\s*(?:new-object\\s+)?net\\.webclient\\b",
     "flags": "i",
     "description": "Detects iex executing a Net.WebClient download directly, without a preceding powershell keyword."
-  }
+  },
+  {
+  "source": "\\bmsiexec(?:\\.exe)?\\b[^\\n\\r]*?\\s+[/-](?:i|package)\\s+https?:[/\\\\]{1,2}[^\\s\"']+",
+  "flags": "i",
+  "description": "Detects `msiexec.exe` being invoked to fetch and install a remote package directly over HTTP/HTTPS, commonly abused in ClickFix and malvertising lures."
+}
 ]
