@@ -113,5 +113,20 @@
   "source": "\\bmsiexec(?:\\.exe)?\\b[^\\n\\r]*?\\s+[/-](?:i|package)\\s+https?:[/\\\\]{1,2}[^\\s\"']+",
   "flags": "i",
   "description": "Detects `msiexec.exe` being invoked to fetch and install a remote package directly over HTTP/HTTPS, commonly abused in ClickFix and malvertising lures."
-}
+},
+{
+    "source": "(?:New-Object\\s+Net\\.WebClient|IO\\.Compression\\.ZipArchive)[\\s\\S]*?IO\\.Compression\\.ZipArchive[\\s\\S]*?&\\s*[\"']?[$%a-zA-Z0-9_:\\\\]+\\.(?:bat|cmd|ps1|exe)",
+    "flags": "i",
+    "description": "Detects in-memory extraction and execution of zipped payloads via .NET ZipArchive and WebClient without writing the archive to disk."
+  },
+  {
+    "source": "(?:GetConsoleWindow|ShowWindow)[\\s\\S]*?curl\\s+https?:\\/\\/[^\\s;]+[\\s\\S]*?Start-Process",
+    "flags": "i",
+    "description": "Detects PowerShell payloads using P/Invoke to hide console windows (ShowWindow 0) combined with download-and-execute activity."
+  },
+  {
+    "source": "\\bnet(?:1)?(?:\\.exe)?\\s+use\\s+[a-zA-Z]:\\s+https?:\\/\\/[^\\s&|;]+",
+    "flags": "i",
+    "description": "Detects mounting remote WebDAV shares over HTTP/HTTPS using `net use` to stage and execute remote binaries or scripts."
+  }
 ]
