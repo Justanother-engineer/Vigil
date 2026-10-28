@@ -10,6 +10,142 @@ let quarantinedText = null; // ponytail: per-tab stash of cleared malware text; 
 let lastReadErrorMessage = null; // ponytail: warn once per distinct read failure; 500ms spam helps nobody.
 const MAX_VALIDATE_LEN = 16000; // ponytail: head-only validation; tail evasion is the documented ceiling.
 
+// Alert UI: same markup/CSS as before, now rendered inside a closed shadow root
+// with a native Top Layer <dialog>. Styles are adopted rather than injected as a
+// <style> node so page style-src CSP cannot block them.
+const ALERT_STYLES = `
+  :host { all: initial; }
+  #custom-security-alert-extension-injected {
+    position: fixed;
+    top: 20px;
+    right: -450px; /* Start off-screen */
+    width: 400px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-left: 6px solid #d32f2f; /* Red accent for alert */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    z-index: 2147483647;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 8px;
+    color: #333;
+    box-sizing: border-box;
+  }
+
+  #custom-security-alert-extension-injected.visible {
+    right: 20px; /* Slide in */
+  }
+
+  #custom-security-alert-extension-injected h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #d32f2f;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  #custom-security-alert-extension-injected p {
+    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  #custom-security-alert-extension-injected .copied-text-preview {
+    background-color: #f9f9f9;
+    border: 1px solid #eeeeee;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-all;
+    margin-bottom: 15px;
+    color: #555;
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 1;
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons .cancel-button {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons .cancel-button:hover {
+    background-color: #5a6268;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons .ok-button {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  #custom-security-alert-extension-injected .alert-buttons .ok-button:hover {
+    background-color: #45a049;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  #custom-security-alert-overlay-extension-injected {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 2147483646;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+  }
+
+  #custom-security-alert-overlay-extension-injected.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  dialog {
+    all: initial;
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+    display: block;
+  }
+
+  /* Transparent: the Vigil overlay div stays the visible dimmer. */
+  dialog::backdrop { background: transparent; }
+`;
+
+let activeAlertHost = null;
+
 // Helper function to identify common Chrome extension communication errors.
 function isCommunicationError(error) {
   return error && error.message && (
@@ -212,17 +348,46 @@ function showAlertInPage(copiedText) {
   const alertId = 'custom-security-alert-extension-injected';
   const overlayId = 'custom-security-alert-overlay-extension-injected';
 
-  // Remove any existing alert elements.
-  document.getElementById(alertId)?.remove();
-  document.getElementById(overlayId)?.remove();
+  // Closed shadow internals are unreachable from the document, so a stored host
+  // ref is the only way to retire the previous alert.
+  if (activeAlertHost) {
+    activeAlertHost.remove();
+    activeAlertHost = null;
+  }
+
+  if (!document.documentElement) {
+    console.warn('[Vigil Clipboard] documentElement not available, cannot show alert.');
+    return;
+  }
+
+  // Host on documentElement, immune to page body swaps; inline styles keep page
+  // CSS from moving or hiding it.
+  const host = document.createElement('div');
+  host.id = 'custom-security-alert-host-extension-injected';
+  host.style.cssText = 'all: initial !important; display: block !important; position: fixed !important; inset: 0 !important; z-index: 2147483647 !important; pointer-events: auto !important;';
+
+  const shadow = host.attachShadow({ mode: 'closed' });
+
+  // Constructable stylesheets bypass page style-src CSP; fall back to a <style>
+  // node when the browser lacks either constructable or adoptable sheets.
+  try {
+    if (!('adoptedStyleSheets' in shadow)) throw new Error('adoptedStyleSheets unsupported');
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(ALERT_STYLES);
+    shadow.adoptedStyleSheets = [sheet];
+  } catch {
+    const style = document.createElement('style');
+    style.textContent = ALERT_STYLES;
+    shadow.appendChild(style);
+  }
+
+  // Native Top Layer modal; Escape stays a no-op as before.
+  const dialog = document.createElement('dialog');
+  dialog.id = 'custom-security-alert-dialog-extension-injected';
+  dialog.addEventListener('cancel', (e) => e.preventDefault());
 
   const overlay = document.createElement('div');
   overlay.id = overlayId;
-  if (!document.body) { // Ensure body is available before appending.
-    console.warn('[Vigil Clipboard] document.body not available, cannot show alert overlay.');
-    return;
-  }
-  document.body.appendChild(overlay);
 
   const alertContainer = document.createElement('div');
   alertContainer.id = alertId;
@@ -240,25 +405,20 @@ function showAlertInPage(copiedText) {
   `;
   alertContainer.querySelector('.copied-text-preview').textContent = copiedText;
 
-  if (!document.body) { // Double-check body before appending alert container.
-     console.warn('[Vigil Clipboard] document.body not available, cannot show alert container.');
-     overlay.remove(); // Clean up overlay if alert cannot be shown.
-     return;
-  }
-  document.body.appendChild(alertContainer);
+  dialog.appendChild(overlay);
+  dialog.appendChild(alertContainer);
+  shadow.appendChild(dialog);
 
   function removeDialog() {
-    const alertElement = document.getElementById(alertId);
-    const overlayElement = document.getElementById(overlayId);
-    alertElement?.classList.remove('visible');
-    overlayElement?.classList.remove('visible');
+    overlay.classList.remove('visible');
+    alertContainer.classList.remove('visible');
 
     if (lastAlertedText === copiedText) lastAlertedText = null;
 
     // Allow fade-out animation before removing from DOM.
     setTimeout(() => {
-      alertElement?.remove();
-      overlayElement?.remove();
+      host.remove();
+      if (activeAlertHost === host) activeAlertHost = null;
     }, 400);
   }
 
@@ -299,10 +459,24 @@ function showAlertInPage(copiedText) {
       });
   });
 
+  // Host must be connected before showModal(); fall back to the open attribute
+  // when the modal API is unavailable or the page's own modal conflicts.
+  document.documentElement.appendChild(host);
+  activeAlertHost = host;
+  try {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+  } catch {
+    dialog.setAttribute('open', '');
+  }
+
   // Make alert visible and focus the cancel button after a brief delay for rendering.
   setTimeout(() => {
-    document.getElementById(alertId)?.classList.add('visible');
-    document.getElementById(overlayId)?.classList.add('visible');
+    alertContainer.classList.add('visible');
+    overlay.classList.add('visible');
     alertContainer.querySelector('.cancel-button')?.focus();
   }, 10);
 }

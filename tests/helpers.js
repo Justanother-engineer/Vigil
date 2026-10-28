@@ -16,7 +16,54 @@ function readSource(name) {
 // state.listeners captures document.addEventListener registrations.
 // opts.onSendMessage(msg) controls stubbed background replies.
 function loadClipboard(opts = {}) {
-  const state = { clipboardText: '', writes: [], sentMessages: [], listeners: {} };
+  const state = { clipboardText: '', writes: [], sentMessages: [], listeners: {}, createdNodes: [] };
+
+  // Minimal DOM node stub: enough for the alert renderer's create/append/shadow/
+  // dialog calls. querySelector caches per selector so listener assertions work.
+  function makeNode(tagName) {
+    const node = {
+      tagName: String(tagName).toUpperCase(),
+      id: '',
+      textContent: '',
+      innerHTML: '',
+      children: [],
+      parentNode: null,
+      listeners: {},
+      style: { cssText: '', setProperty() {}, removeProperty() {} },
+      classList: {
+        _set: new Set(),
+        add(...names) { names.forEach((n) => this._set.add(n)); },
+        remove(...names) { names.forEach((n) => this._set.delete(n)); },
+        contains(name) { return this._set.has(name); },
+      },
+      _queries: new Map(),
+      appendChild(child) { node.children.push(child); child.parentNode = node; return child; },
+      removeChild(child) {
+        const i = node.children.indexOf(child);
+        if (i >= 0) node.children.splice(i, 1);
+        child.parentNode = null;
+      },
+      remove() { if (node.parentNode) node.parentNode.removeChild(node); },
+      addEventListener(type, fn) { (node.listeners[type] ??= []).push(fn); },
+      setAttribute() {},
+      querySelector(sel) {
+        if (!node._queries.has(sel)) node._queries.set(sel, makeNode('div'));
+        return node._queries.get(sel);
+      },
+      focus() {},
+      showModal() { node.showModalCalled = true; },
+      attachShadow(options) {
+        node.shadowRoot = makeNode('#shadow');
+        node.shadowRoot.mode = options.mode;
+        return node.shadowRoot;
+      },
+    };
+    state.createdNodes.push(node);
+    return node;
+  }
+
+  const documentElement = makeNode('html');
+
   const sandbox = {
     navigator: {
       clipboard: {
@@ -27,6 +74,8 @@ function loadClipboard(opts = {}) {
     document: {
       hasFocus: () => true,
       body: null,
+      documentElement,
+      createElement: (tagName) => makeNode(tagName),
       getElementById: () => null,
       addEventListener: (type, fn) => { (state.listeners[type] ??= []).push(fn); },
     },

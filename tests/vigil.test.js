@@ -298,3 +298,21 @@ test('clipboard read failure warns once, not silently or spammy', async () => {
   await vm.runInContext('checkClipboard()', context);
   assert.equal(warns.length, 1, `expected exactly one read-failure warn, got ${JSON.stringify(warns)}`);
 });
+
+test('alert renders inside a closed shadow top-layer dialog', () => {
+  const { context, state } = loadClipboard();
+  vm.runInContext('showAlertInPage("powershell -EncodedCommand ABC")', context);
+
+  const host = state.createdNodes.find((n) => n.id === 'custom-security-alert-host-extension-injected');
+  assert.ok(host, 'expected the shadow host to be created');
+  assert.equal(host.parentNode, state.createdNodes.find((n) => n.tagName === 'HTML'), 'expected host on documentElement');
+  assert.equal(host.shadowRoot?.mode, 'closed', 'expected a closed shadow root');
+
+  const dialog = state.createdNodes.find((n) => n.id === 'custom-security-alert-dialog-extension-injected');
+  assert.ok(dialog, 'expected a dialog inside the shadow');
+  assert.equal(dialog.showModalCalled, true, 'expected showModal() to be called');
+
+  const alert = state.createdNodes.find((n) => n.id === 'custom-security-alert-extension-injected');
+  assert.equal(alert.querySelector('.cancel-button').listeners.click?.length, 1);
+  assert.equal(alert.querySelector('.ok-button').listeners.click?.length, 1);
+});
